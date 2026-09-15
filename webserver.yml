@@ -1,43 +1,30 @@
 ---
-- name: SafeOps - Web Server Deployment
+- name: Deploy Concepts Techniques Energie website
   hosts: serverweb
   become: true
-  gather_facts: true
 
   tasks:
-
     - name: Install Nginx
       ansible.builtin.apt:
         name: nginx
         state: present
         update_cache: true
 
-    - name: Ensure Nginx is running and enabled
+    - name: Ensure Nginx is running
       ansible.builtin.service:
         name: nginx
         state: started
         enabled: true
 
-    - name: Deploy SafeOps web page
+    - name: Deploy website files
       ansible.builtin.copy:
-        dest: /var/www/html/index.html
-        content: |
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>SafeOps</title>
-          </head>
-          <body>
-              <h1>SafeOps Infrastructure</h1>
-              <p>Web server deployed automatically with Ansible.</p>
-              <p>Host: {{ inventory_hostname }}</p>
-          </body>
-          </html>
-        owner: root
-        group: root
-        mode: '0644'
+        src: files/website/
+        dest: /var/www/html/
+        owner: www-data
+        group: www-data
+        mode: "0755"
 
-    - name: Verify Nginx HTTP service
+    - name: Verify website availability
       ansible.builtin.uri:
         url: http://localhost
         status_code: 200
