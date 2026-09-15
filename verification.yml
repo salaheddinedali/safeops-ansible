@@ -1,0 +1,28 @@
+---
+- name: Vérifier les machines du laboratoire SafeOps
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Vérifier la communication Ansible
+      ansible.builtin.ping:
+
+    - name: Vérifier les droits administrateur
+      become: true
+      ansible.builtin.command: whoami
+      register: resultat_admin
+      changed_when: false
+
+    - name: Confirmer que les droits root sont disponibles
+      ansible.builtin.assert:
+        that:
+          - resultat_admin.stdout | trim == "root"
+        fail_msg: "Les droits administrateur ne sont pas disponibles."
+        success_msg: "Les droits administrateur sont disponibles."
+
+    - name: Afficher les informations de la machine
+      ansible.builtin.debug:
+        msg:
+          - "Cible : {{ inventory_hostname }}"
+          - "Système : {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+          - "Nom machine : {{ ansible_facts['hostname'] }}"

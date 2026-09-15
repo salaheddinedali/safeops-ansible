@@ -1,0 +1,11 @@
+---
+- name: Installer Nginx sur le serveur web
+  hosts: serverweb
+  become: true
+
+  tasks:
+    - name: Installer le paquet Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true

@@ -1,0 +1,23 @@
+---
+- name: SafeOps - Pre-deployment checks
+  hosts: all
+  gather_facts: true
+
+  tasks:
+
+    - name: Test Ansible connectivity
+      ansible.builtin.ping:
+
+    - name: Display operating system information
+      ansible.builtin.debug:
+        msg: >
+          Host {{ inventory_hostname }}
+          runs {{ ansible_facts["distribution"] }}
+          {{ ansible_facts["distribution_version"] }}
+
+    - name: Check available disk space on root partition
+      ansible.builtin.assert:
+        that:
+          - ansible_facts["mounts"] | selectattr('mount', 'equalto', '/') | map(attribute='size_available') | first > 1073741824
+        success_msg: "SafeOps check passed: sufficient disk space."
+        fail_msg: "SafeOps check failed: less than 1 GB free on root partition."

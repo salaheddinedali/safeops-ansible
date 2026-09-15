@@ -1,0 +1,29 @@
+---
+- name: SafeOps - Database Server Deployment
+  hosts: database
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Install MariaDB server
+      ansible.builtin.apt:
+        name: mariadb-server
+        state: present
+        update_cache: true
+
+    - name: Ensure MariaDB is running and enabled
+      ansible.builtin.service:
+        name: mariadb
+        state: started
+        enabled: true
+
+    - name: Verify MariaDB service status
+      ansible.builtin.command:
+        cmd: systemctl is-active mariadb
+      register: mariadb_status
+      changed_when: false
+
+    - name: Display MariaDB verification result
+      ansible.builtin.debug:
+        msg: "MariaDB status: {{ mariadb_status.stdout }}"

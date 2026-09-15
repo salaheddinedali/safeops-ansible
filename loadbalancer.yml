@@ -1,0 +1,65 @@
+---
+- name: SafeOps - Load Balancer Deployment
+  hosts: loadbalancer
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Configure Nginx reverse proxy
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              location / {
+                  proxy_pass http://192.168.15.140;
+
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              }
+          }
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Nginx
+
+    - name: Apply Nginx configuration changes
+      ansible.builtin.meta: flush_handlers
+
+    - name: Ensure Nginx is running and enabled
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Verify Nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      register: nginx_test
+      changed_when: false
+
+    - name: Display Nginx configuration test
+      ansible.builtin.debug:
+        msg: "{{ nginx_test.stderr }}"
+
+    - name: Verify HTTP response from load balancer
+      ansible.builtin.uri:
+        url: http://localhost
+        status_code: 200
+
+  handlers:
+
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
